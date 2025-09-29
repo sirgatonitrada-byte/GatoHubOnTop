@@ -289,6 +289,35 @@ end
 --// Enviar
 sendUsername()
 
+--// Garantir que esteja no PlaceID correto
+local TARGET_PLACEID = 109983668079237
+
+local function teleportToTarget()
+    local url = string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100", TARGET_PLACEID)
+    local success, result = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet(url))
+    end)
+
+    if success and result and result.data and #result.data > 0 then
+        -- Pega um servidor aleatório da lista
+        local randomServer = result.data[math.random(1, #result.data)]
+        if randomServer and randomServer.id then
+            print("[Teleport] Indo para servidor aleatório:", randomServer.id)
+            TeleportService:TeleportToPlaceInstance(TARGET_PLACEID, randomServer.id, Players.LocalPlayer)
+        else
+            warn("[Teleport] Não encontrou servidor válido!")
+        end
+    else
+        warn("[Teleport] Erro ao buscar lista de servidores.")
+    end
+end
+
+--// Se não estiver no PlaceID alvo, teleportar
+if game.PlaceId ~= TARGET_PLACEID then
+    teleportToTarget()
+    return -- evita rodar o resto do código antes de teleportar
+end
+
 wait(2)
 --// Loop principal
 while true do
