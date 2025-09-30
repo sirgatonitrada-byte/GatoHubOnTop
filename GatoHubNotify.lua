@@ -1,4 +1,40 @@
 repeat wait() until game:IsLoaded() and game.Players.LocalPlayer
+-- Teleport simples somente se estiver em place diferente
+local TARGET_PLACEID = 109983668079237
+local Players = game:GetService("Players")
+local TeleportService = game:GetService("TeleportService")
+
+local function hopAnyServer(placeId)
+    local tries = {
+        function() return TeleportService:Teleport(placeId, Players.LocalPlayer) end,
+        function() return TeleportService:Teleport(tostring(placeId), Players.LocalPlayer) end,
+        function() return TeleportService:Teleport(placeId) end,
+        function() return TeleportService:Teleport(tostring(placeId)) end,
+    }
+
+    for i, fn in ipairs(tries) do
+        local ok, err = pcall(fn)
+        if ok then
+            print(("[Hop] Teleport chamado com sucesso (tentativa %d)."):format(i))
+            return true
+        else
+            warn(("[Hop] Tentativa %d falhou: %s"):format(i, tostring(err)))
+            task.wait(0.4)
+        end
+    end
+
+    warn("[Hop] Todas as tentativas falharam.")
+    return false
+end
+
+-- Checagem: só teleporta se o Place atual for diferente do alvo
+if game.PlaceId ~= TARGET_PLACEID then
+    print(("[Hop] Place atual (%s) é diferente do alvo (%s). Iniciando hop..."):format(tostring(game.PlaceId), tostring(TARGET_PLACEID)))
+    hopAnyServer(TARGET_PLACEID)
+else
+    print(("[Hop] Já está no PlaceID alvo (%s). Nenhum teleport executado."):format(tostring(TARGET_PLACEID)))
+end
+
 --// Serviços
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
