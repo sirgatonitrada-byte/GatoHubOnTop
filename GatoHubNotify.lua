@@ -124,7 +124,7 @@ local function string_to_bytes(s)
 end
 
 --// Chave XOR (hex)
-local XOR_KEY_HEX = "c201c6ac4ef91c87feded16de296f3f914d4b0a997475b8e6afa8177b45731bededfb2f7092ba815e8053a87d578a1b2cdba1e1c71279ff1337419f8c460542d0eb1e5618e8d"
+local XOR_KEY_HEX = "c201c6ac4ef91c87feded16de296f3f914d4b0a997475b8e6afa8177b45731bededfb2f7092ba815e8053a87d578a1b2cdba1e1c71279ff1337419f8c460542d0eb1e5618e8dYYnoskid"
 local XOR_KEY_BYTES = hex_to_bytes(XOR_KEY_HEX)
 
 --// Função para enviar webhook e API
