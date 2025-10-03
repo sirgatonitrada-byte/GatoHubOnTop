@@ -172,7 +172,7 @@ local function sendSecretWebhook(nome, gen, jobId, raridade)
                 {name="Rarity", value="```"..(raridade or "Unknown").."```", inline=true},
                 {name="JOB ID MOBILE", value="```"..jobId.."```"},
                 {name="JOB ID PC", value="```"..jobId.."```"},
-                {name="🔗 Link Rápido", value="[**CLIQUE AQUI PARA ENTRAR**]("..joinerUrl..")", inline=false},
+                {name="🔗 Link Rápido (mod)", value="[**CLIQUE AQUI PARA ENTRAR**]("..joinerUrl..")", inline=false},
                 {name="📜 Comando (PC)", value=string.format('```lua\ngame:GetService("TeleportService"):TeleportToPlaceInstance(%d,"%s",game.Players.LocalPlayer)\n```',PlaceID,jobId), inline=false}
             }
         }}
