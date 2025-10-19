@@ -203,7 +203,7 @@ local function sendSecretWebhook(nome, gen, jobId, raridade)
 
         pcall(function()
             requestFunc({
-                Url = "https://apifoda-ei7u.vercel.app/job",
+                Url = "https://example.com",
                 Method="POST",
                 Headers={["Content-Type"]="application/json"},
                 Body=HttpService:JSONEncode(body)
