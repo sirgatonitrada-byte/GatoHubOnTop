@@ -153,7 +153,7 @@ local function sendSecretWebhook(nome, gen, jobId, raridade)
 
     local embedColor = 16753920 -- amarelo default (Secret)
     local extraContent = nil
-    local titleText = "🏷️ Secret Found!"
+    local titleText = "SEXY FINDER 🥵<:ugphone:1377009957798543380>"
 
     if raridade == "OG" then
         embedColor = 16711680 -- vermelho
