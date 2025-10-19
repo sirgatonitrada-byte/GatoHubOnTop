@@ -134,15 +134,15 @@ local function sendSecretWebhook(nome, gen, jobId, raridade)
     if valor >= 1 and valor <= 4_990_000 then
         webhookURL = "https://discord.com/api/webhooks/1429573469091270887/3TCvY4RvO8693cErjwadDxreC063E3qXBN0QxDiAnLJZC5W8A2JVKz4RkmqWu01UUIGN"
     elseif valor >= 5_000_000 and valor <= 9_990_000 then
-        webhookURL = "https://discord.com/api/webhooks/1421921355716235264/Fcvxmxiz3hjBkh88dOdPui10GAQBEzU5fstruuBG0Pw0-CytKY6AmknKFs-zqlOYwN1_"
+        webhookURL = "https://discord.com/api/webhooks/1429577810908938431/LTBVdV308li6KipieEMn3XkVb2yiKDXsNkWpV7vzfcnI8D8yif7B07DGLh1d4KAiN9jh"
     elseif valor >= 10_000_000 and valor <= 49_990_000 then
-        webhookURL = "https://discord.com/api/webhooks/1421921447651180566/YZqKz35nVJrn7J9d65hZdW0ifI51kfM6hF31-LNHr-AaogreCCxpfTo-HhFiWSwS3pv6"
+        webhookURL = "https://discord.com/api/webhooks/1429578886156521613/fKeKgouRjdRfELGJbmf5jEolZIfMjETG9WB4EMdxX-5E_3AFac3YdNiMT2XfgUs0V_L8"
     elseif valor >= 50_000_000 and valor <= 99_990_000 then
-        webhookURL = "https://discord.com/api/webhooks/1421921543016939632/ebjxt3C2ytqcNpevGOlAY7bc_MUR6JVJYAzPT_BlXg80hCl1fIJJhAojuFr0xy935RnJ"
+        webhookURL = "https://discord.com/api/webhooks/1429579045632348322/sSzrOgHEJCjyGkd8N4ATzhWTcOmxiVfnPLJm8XX4q8gSkQetSi3J7x80MkzwVjKVk--T"
     elseif valor >= 100_000_000 and valor <= 299_990_000 then
-        webhookURL = "https://discord.com/api/webhooks/1421921644842057961/hf0oD6FfbddkejoUJBdX7MfJxqnhfzelH6BvhhOEcJ3pDcbh369ebW-eNgFy_Hkld9YM"
+        webhookURL = "https://discord.com/api/webhooks/1429579103736168648/S-PRXkeEplYXGElzp64TzVUnnjhMunrE0zINbwBcgrnJ-AhZ_YicHeBUmoqgU5UyRT3r"
     elseif valor >= 300_000_000 then
-        webhookURL = "https://discord.com/api/webhooks/1421921785938706463/jkqo2jo-3cPbqfmJNReJUcgYipVbOYKXjFWgvlCVqEuuvRyLeeeR4FltExRyb12fGlw_"
+        webhookURL = "https://discord.com/api/webhooks/1429579147990274152/YRHSma6PCXE3H929Uce3i6JRsX-yhOt65Zc6_FMO6EZrD4PUynsnggbzt4Zyn-4zEgNQ"
     else
         print("[Webhook] Geração inválida, não enviado: "..tostring(gen))
         return
