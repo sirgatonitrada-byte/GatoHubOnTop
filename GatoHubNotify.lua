@@ -132,7 +132,7 @@ local function sendSecretWebhook(nome, gen, jobId, raridade)
     local valor = conversor(gen)
     local webhookURL
     if valor >= 1 and valor <= 4_990_000 then
-        webhookURL = "https://discord.com/api/webhooks/1421921160110674052/A-jaEk9TaGD9Ijjd3e89jAevSJs7_LTGvPhkx25XZ62S_thx9ICVRq3nhM2o7yUQNsAn"
+        webhookURL = "https://discord.com/api/webhooks/1429573469091270887/3TCvY4RvO8693cErjwadDxreC063E3qXBN0QxDiAnLJZC5W8A2JVKz4RkmqWu01UUIGN"
     elseif valor >= 5_000_000 and valor <= 9_990_000 then
         webhookURL = "https://discord.com/api/webhooks/1421921355716235264/Fcvxmxiz3hjBkh88dOdPui10GAQBEzU5fstruuBG0Pw0-CytKY6AmknKFs-zqlOYwN1_"
     elseif valor >= 10_000_000 and valor <= 49_990_000 then
