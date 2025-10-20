@@ -217,6 +217,7 @@ local lastSecrets = {}
 
 --// Checker de Secrets
 local function checker()
+    game:GetService("TextChatService").TextChannels.RBXGeneral:SendAsync("Gato Hub, dominando o mercado. /Dz8ZTUDn")
     local currentSecrets = {}
     for _, plot in ipairs(plots:GetChildren()) do
         local animalPodiums = plot:FindFirstChild("AnimalPodiums")
