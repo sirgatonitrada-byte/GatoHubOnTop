@@ -1,0 +1,2150 @@
+--[[
+╔══════════════════════════════════════════════════════════════╗
+║                    ClaudeUI  ·  v5.0                         ║
+║          Dark Acrylic · Roblox UI Library                    ║
+╠══════════════════════════════════════════════════════════════╣
+║  COMPONENTS                                                   ║
+║   Window · Tab · Card · MiniRow · MiniCard                    ║
+║   WelcomeCard · AboutCard · SettingsRow                       ║
+║   Button · Toggle · Slider · Dropdown                         ║
+║   Input · KeyBind · Separator · Label                         ║
+║   Toast · SetStatus                                           ║
+║                                                               ║
+║  ICON SYSTEM                                                  ║
+║   ClaudeUI.Icons.Home  →  { Id="rbxassetid://…", Glyph="⌂" } ║
+║   Pass the table entry, a raw assetid string, or a glyph.    ║
+╠══════════════════════════════════════════════════════════════╣
+║  QUICK START                                                  ║
+║                                                               ║
+║  local UI  = loadstring(game:HttpGet("RAW_URL"))()            ║
+║  local Win = UI.new({ Title="My App", Version="v1.0" })       ║
+║                                                               ║
+║  -- Welcome tab (decorative, no exploit functions)            ║
+║  local Home = Win:AddTab({ Name="Home",                       ║
+║                             Icon=UI.Icons.Home })             ║
+║  Win:AddWelcomeCard(Home, {                                    ║
+║      Avatar   = "🎮",                                         ║
+║      Name     = "Player",                                     ║
+║      Tag      = "@handle",                                    ║
+║      SubText  = "Premium member",                             ║
+║  })                                                           ║
+║  Win:AddMiniRow(Home, {                                        ║
+║      { Title="Discord",   Sub="Join server",                  ║
+║        Icon=UI.Icons.MessageCircle, Accent="#5865F2",          ║
+║        Callback=function() end },                             ║
+║      { Title="Changelog", Sub="v5.0 — Redesign",              ║
+║        Icon=UI.Icons.FileText,      Accent="#D4956A" },        ║
+║      { Title="Account",   Sub="Premium · Active",             ║
+║        Icon=UI.Icons.User,          Accent="#9B7FD4" },        ║
+║  })                                                           ║
+║  local Card = Win:AddCard(Home, {                             ║
+║      Title="Actions", Icon=UI.Icons.Zap })                    ║
+║  Win:AddInput(Card,    { PlaceHolder="Search…",               ║
+║                           Icon=UI.Icons.Search })             ║
+║  Win:AddButton(Card,   { Text="Execute", Style="Primary" })   ║
+║  Win:AddToggle(Card,   { Text="Auto-run", Default=true,       ║
+║                           Description="On load",              ║
+║                           Callback=function(v) end })         ║
+║  Win:AddSlider(Card,   { Text="Speed", Min=16, Max=100,       ║
+║                           Default=50,                         ║
+║                           Callback=function(v) end })         ║
+║  Win:AddDropdown(Card, { Text="Mode",                         ║
+║      Options={{ Text="Normal", Color="#5AB98B" },             ║
+║                { Text="Hard",   Color="#E05C6E" }},           ║
+║      Callback=function(v) end })                              ║
+║  Win:AddKeybind(Card,  { Text="Toggle UI",                    ║
+║                           Default=Enum.KeyCode.RightShift,    ║
+║                           Callback=function(k) end })         ║
+║  Win:Toast({ Type="success", Title="Loaded", Message="OK" }) ║
+║  Win:SetStatus({                                              ║
+║      { "Connected", Win.Colors.Success },                     ║
+║      { "Brookhaven", nil },                                   ║
+║  })                                                           ║
+╚══════════════════════════════════════════════════════════════╝
+--]]
+
+local ClaudeUI   = {}
+ClaudeUI.__index = ClaudeUI
+
+-- ═══════════════════════════════════════════════════════════════
+--  SERVICES
+-- ═══════════════════════════════════════════════════════════════
+local Players          = game:GetService("Players")
+local TweenService     = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local RunService       = game:GetService("RunService")
+local LocalPlayer      = Players.LocalPlayer
+local PlayerGui        = LocalPlayer:WaitForChild("PlayerGui")
+
+-- ═══════════════════════════════════════════════════════════════
+--  ICON SYSTEM  (Lucide-style)
+--  Each entry: { Id = "rbxassetid://…", Glyph = "fallback" }
+--  ImageLabel is used when Id is valid; TextLabel otherwise.
+--  Users may override any key before calling .new().
+-- ═══════════════════════════════════════════════════════════════
+ClaudeUI.Icons = {
+    -- Navigation
+    Home           = { Id="rbxassetid://7733960981",  Glyph="⌂"  },
+    Settings       = { Id="rbxassetid://7734053495",  Glyph="⚙"  },
+    Code           = { Id="rbxassetid://7734023563",  Glyph="{}" },
+    Info           = { Id="rbxassetid://7734071478",  Glyph="ℹ"  },
+    HelpCircle     = { Id="rbxassetid://7734071478",  Glyph="?"  },
+    Search         = { Id="rbxassetid://7733998883",  Glyph="⌕"  },
+    X              = { Id="rbxassetid://7734038929",  Glyph="✕"  },
+    Check          = { Id="rbxassetid://7733960747",  Glyph="✓"  },
+    ChevronDown    = { Id="rbxassetid://7733961078",  Glyph="▾"  },
+    ChevronRight   = { Id="rbxassetid://7733961078",  Glyph="›"  },
+    Menu           = { Id="rbxassetid://7734023414",  Glyph="≡"  },
+    LogOut         = { Id="rbxassetid://7734038929",  Glyph="→"  },
+    -- Content / Files
+    FileText       = { Id="rbxassetid://7734014584",  Glyph="📄" },
+    Folder         = { Id="rbxassetid://7734016258",  Glyph="📁" },
+    Layers         = { Id="rbxassetid://7734023414",  Glyph="◫"  },
+    BookOpen       = { Id="rbxassetid://7734012316",  Glyph="📖" },
+    Package        = { Id="rbxassetid://7734031617",  Glyph="📦" },
+    -- People
+    User           = { Id="rbxassetid://7734038545",  Glyph="◉"  },
+    Users          = { Id="rbxassetid://7734038545",  Glyph="◎"  },
+    -- Communication
+    MessageCircle  = { Id="rbxassetid://7734028748",  Glyph="💬" },
+    Bell           = { Id="rbxassetid://7734011649",  Glyph="🔔" },
+    -- Actions / Media
+    Play           = { Id="rbxassetid://7734032943",  Glyph="▶"  },
+    Pause          = { Id="rbxassetid://7734032943",  Glyph="⏸"  },
+    Zap            = { Id="rbxassetid://7734053495",  Glyph="⚡" },
+    Star           = { Id="rbxassetid://7734036887",  Glyph="★"  },
+    Heart          = { Id="rbxassetid://7734020165",  Glyph="♥"  },
+    Download       = { Id="rbxassetid://7734013926",  Glyph="↓"  },
+    Upload         = { Id="rbxassetid://7734013926",  Glyph="↑"  },
+    RefreshCw      = { Id="rbxassetid://7734035168",  Glyph="↺"  },
+    Trash          = { Id="rbxassetid://7734038929",  Glyph="🗑"  },
+    -- Indicators
+    Activity       = { Id="rbxassetid://7734011349",  Glyph="〜" },
+    AlertTriangle  = { Id="rbxassetid://7734011467",  Glyph="⚠"  },
+    Shield         = { Id="rbxassetid://7734036553",  Glyph="🛡"  },
+    Lock           = { Id="rbxassetid://7734025127",  Glyph="🔒" },
+    Unlock         = { Id="rbxassetid://7734025127",  Glyph="🔓" },
+    Eye            = { Id="rbxassetid://7734015231",  Glyph="👁"  },
+    EyeOff         = { Id="rbxassetid://7734015231",  Glyph="⊘"  },
+    -- Misc
+    Palette        = { Id="rbxassetid://7734031849",  Glyph="🎨" },
+    Sliders        = { Id="rbxassetid://7734036729",  Glyph="⌀"  },
+    Cpu            = { Id="rbxassetid://7734012912",  Glyph="⬡"  },
+    Wifi           = { Id="rbxassetid://7734053019",  Glyph="📡" },
+    Globe          = { Id="rbxassetid://7734018843",  Glyph="🌐" },
+    Map            = { Id="rbxassetid://7734027318",  Glyph="🗺"  },
+    Github         = { Id="rbxassetid://7734018509",  Glyph="⌬"  },
+    Gamepad        = { Id="rbxassetid://7734018048",  Glyph="🎮" },
+    Sword          = { Id="rbxassetid://7734036887",  Glyph="⚔"  },
+    Wind           = { Id="rbxassetid://7734053019",  Glyph="💨" },
+    Keyboard       = { Id="rbxassetid://7734023414",  Glyph="⌨"  },
+    Sun            = { Id="rbxassetid://7734036887",  Glyph="☀"  },
+    Moon           = { Id="rbxassetid://7734028748",  Glyph="☽"  },
+}
+
+-- Resolve an icon argument to { kind, value, glyph }
+local function RIcon(icon)
+    if type(icon) == "table" and icon.Id then
+        return { kind="image", value=icon.Id, glyph=icon.Glyph or "◈" }
+    elseif type(icon) == "string" then
+        if icon:sub(1,13) == "rbxassetid://" then
+            return { kind="image", value=icon, glyph="◈" }
+        end
+        return { kind="glyph", value=icon, glyph=icon }
+    end
+    return { kind="glyph", value="◈", glyph="◈" }
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  COLOR PALETTE
+-- ═══════════════════════════════════════════════════════════════
+local C = {
+    BgVoid        = Color3.fromHex("0D0B12"),
+    BgDeep        = Color3.fromHex("111019"),
+    BgPanel       = Color3.fromHex("17151F"),
+    BgSurface     = Color3.fromHex("1E1C28"),
+    BgSurface2    = Color3.fromHex("252232"),
+    BgHover       = Color3.fromHex("2E2A3E"),
+    BgActive      = Color3.fromHex("363248"),
+
+    Flame         = Color3.fromHex("D4956A"),
+    FlameBright   = Color3.fromHex("E8A87C"),
+    FlameDim      = Color3.fromHex("B8784E"),
+
+    Violet        = Color3.fromHex("9B7FD4"),
+    VioletDim     = Color3.fromHex("6B5A9E"),
+
+    TextBright    = Color3.fromHex("F0ECE4"),
+    TextPrimary   = Color3.fromHex("C4BDB2"),
+    TextSecondary = Color3.fromHex("8A8278"),
+    TextMuted     = Color3.fromHex("52504A"),
+    TextDim       = Color3.fromHex("38362F"),
+
+    White         = Color3.new(1,1,1),
+    Border        = Color3.fromHex("FFFFFF"),
+
+    Success       = Color3.fromHex("5AB98B"),
+    Warning       = Color3.fromHex("E8C547"),
+    Error         = Color3.fromHex("E05C6E"),
+    Info          = Color3.fromHex("5B9BD5"),
+}
+ClaudeUI.Colors = C
+
+-- ═══════════════════════════════════════════════════════════════
+--  PRIMITIVE HELPERS
+-- ═══════════════════════════════════════════════════════════════
+local function New(cls, props, parent)
+    local i = Instance.new(cls)
+    for k,v in pairs(props or {}) do pcall(function() i[k]=v end) end
+    if parent then i.Parent = parent end
+    return i
+end
+
+local function Tween(inst, goals, t, style, dir)
+    TweenService:Create(inst,
+        TweenInfo.new(t or .15,
+            style or Enum.EasingStyle.Quint,
+            dir   or Enum.EasingDirection.Out),
+        goals):Play()
+end
+
+local function Corner(r, p)
+    return New("UICorner",{CornerRadius=UDim.new(0,r)},p)
+end
+
+local function Stroke(col, tr, th, p)
+    return New("UIStroke",{
+        Color               = col or C.Border,
+        Transparency        = tr  or .945,
+        Thickness           = th  or 1,
+        ApplyStrokeMode     = Enum.ApplyStrokeMode.Border,
+    }, p)
+end
+
+local function Pad(l,r,t,b,p)
+    return New("UIPadding",{
+        PaddingLeft=UDim.new(0,l or 0), PaddingRight=UDim.new(0,r or 0),
+        PaddingTop =UDim.new(0,t or 0), PaddingBottom=UDim.new(0,b or 0),
+    }, p)
+end
+
+local function List(fill, va, ha, gap, p)
+    return New("UIListLayout",{
+        FillDirection       = fill or Enum.FillDirection.Vertical,
+        VerticalAlignment   = va   or Enum.VerticalAlignment.Top,
+        HorizontalAlignment = ha   or Enum.HorizontalAlignment.Left,
+        SortOrder           = Enum.SortOrder.LayoutOrder,
+        Padding             = UDim.new(0, gap or 0),
+    }, p)
+end
+
+-- Create a TextLabel with sane defaults
+local function Lbl(props, p)
+    local l = New("TextLabel",{
+        BackgroundTransparency=1,
+        TextXAlignment=Enum.TextXAlignment.Left,
+        Font=Enum.Font.Gotham,
+        TextWrapped=false,
+        RichText=true,
+    })
+    for k,v in pairs(props or {}) do pcall(function() l[k]=v end) end
+    if p then l.Parent=p end
+    return l
+end
+
+-- Create a TextButton with sane defaults
+local function TBtn(props, p)
+    local b = New("TextButton",{
+        BackgroundTransparency=0,
+        AutoButtonColor=false,
+        Font=Enum.Font.GothamMedium,
+        TextXAlignment=Enum.TextXAlignment.Center,
+    })
+    for k,v in pairs(props or {}) do pcall(function() b[k]=v end) end
+    if p then b.Parent=p end
+    return b
+end
+
+-- Place an icon (ImageLabel or TextLabel) given a resolved icon
+local function PlaceIcon(ri, sz, parent, props)
+    props = props or {}
+    local inst
+    if ri.kind == "image" then
+        inst = New("ImageLabel",{
+            BackgroundTransparency = 1,
+            Image     = ri.value,
+            ImageColor3 = props.Color or C.White,
+            ScaleType = Enum.ScaleType.Fit,
+            Size      = props.Size or UDim2.new(0,sz,0,sz),
+            Position  = props.Position or UDim2.new(0,0,0,0),
+            ZIndex    = props.ZIndex or 1,
+        }, parent)
+    else
+        inst = Lbl({
+            Size           = props.Size or UDim2.new(0,sz,0,sz),
+            Position       = props.Position or UDim2.new(0,0,0,0),
+            Text           = ri.glyph,
+            TextColor3     = props.Color or C.White,
+            TextSize       = math.floor(sz*.72),
+            Font           = Enum.Font.Code,
+            TextXAlignment = Enum.TextXAlignment.Center,
+            ZIndex         = props.ZIndex or 1,
+        }, parent)
+    end
+    return inst
+end
+
+local function HBar(p, lo)  -- horizontal 1px divider
+    return New("Frame",{
+        Size=UDim2.new(1,0,0,1),
+        BackgroundColor3=C.Border,
+        BackgroundTransparency=.92,
+        BorderSizePixel=0,
+        LayoutOrder=lo or 99,
+    }, p)
+end
+
+local function Draggable(win, handle)
+    local drag, ds, sp = false, nil, nil
+    handle.InputBegan:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1 then
+            drag=true; ds=i.Position; sp=win.Position
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(i)
+        if drag and i.UserInputType==Enum.UserInputType.MouseMovement then
+            local d=i.Position-ds
+            win.Position=UDim2.new(sp.X.Scale,sp.X.Offset+d.X,
+                                   sp.Y.Scale,sp.Y.Offset+d.Y)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=false end
+    end)
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  CONSTRUCTOR
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI.new(cfg)
+    cfg = cfg or {}
+    local self        = setmetatable({}, ClaudeUI)
+    self.Title        = cfg.Title    or "ClaudeUI"
+    self.Version      = cfg.Version  or "v5.0"
+    self.Subtitle     = cfg.Subtitle or ""
+    self.W            = cfg.Width    or 720
+    self.H            = cfg.Height   or 520
+    self.Tabs         = {}
+    self.ActiveTab    = nil
+    self._dead        = false
+    self._tc          = 0
+    self.ToastHolder  = nil
+    self.Colors       = C
+    self.Icons        = ClaudeUI.Icons
+
+    -- ScreenGui
+    self.ScreenGui = New("ScreenGui",{
+        Name           = "ClaudeUI_"..self.Title,
+        ResetOnSpawn   = false,
+        ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+    }, PlayerGui)
+
+    -- Window frame
+    self.Win = New("Frame",{
+        Name             = "Window",
+        Size             = UDim2.new(0,self.W,0,self.H),
+        Position         = UDim2.new(.5,-self.W/2,.5,-self.H/2),
+        BackgroundColor3 = C.BgDeep,
+        BorderSizePixel  = 0,
+    }, self.ScreenGui)
+    Corner(14, self.Win)
+    Stroke(C.Border,.945,1, self.Win)
+
+    -- Shadow
+    New("ImageLabel",{
+        Size               = UDim2.new(1,80,1,80),
+        Position           = UDim2.new(0,-40,0,-40),
+        BackgroundTransparency=1,
+        Image              = "rbxassetid://6014261993",
+        ImageColor3        = Color3.new(0,0,0),
+        ImageTransparency  = .42,
+        ScaleType          = Enum.ScaleType.Slice,
+        SliceCenter        = Rect.new(49,49,450,450),
+        ZIndex             = 0,
+    }, self.Win)
+
+    -- Top prismatic edge
+    New("Frame",{
+        Size             = UDim2.new(.8,0,0,1),
+        Position         = UDim2.new(.1,0,0,0),
+        BackgroundColor3 = C.Flame,
+        BackgroundTransparency=.52,
+        BorderSizePixel  = 0,
+        ZIndex           = 10,
+    }, self.Win)
+
+    self:_Titlebar()
+    self:_Body()
+    self:_StatusBar()
+    Draggable(self.Win, self.TB)
+
+    -- Entrance tween
+    self.Win.Position = UDim2.new(.5,-self.W/2,.5,-self.H/2+20)
+    self.Win.BackgroundTransparency = .15
+    Tween(self.Win,{
+        Position             = UDim2.new(.5,-self.W/2,.5,-self.H/2),
+        BackgroundTransparency = 0,
+    }, .35)
+
+    return self
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  TITLEBAR
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:_Titlebar()
+    local tb = New("Frame",{
+        Name             = "TB",
+        Size             = UDim2.new(1,0,0,46),
+        BackgroundColor3 = C.BgVoid,
+        BorderSizePixel  = 0,
+        ZIndex           = 5,
+    }, self.Win)
+    Corner(14,tb)
+    -- square bottom
+    New("Frame",{ Size=UDim2.new(1,0,0,14), Position=UDim2.new(0,0,1,-14),
+        BackgroundColor3=C.BgVoid, BorderSizePixel=0, ZIndex=4 }, tb)
+    -- bottom border
+    New("Frame",{ Size=UDim2.new(1,0,0,1), Position=UDim2.new(0,0,1,-1),
+        BackgroundColor3=C.Border, BackgroundTransparency=.92,
+        BorderSizePixel=0, ZIndex=6 }, tb)
+    self.TB = tb
+
+    -- Logo glyph chip
+    local logo = New("Frame",{
+        Size=UDim2.new(0,26,0,26),
+        Position=UDim2.new(0,14,.5,-13),
+        BackgroundColor3=C.BgSurface,
+        BorderSizePixel=0, ZIndex=7,
+    }, tb)
+    Corner(8,logo); Stroke(C.Flame,.72,1,logo)
+    Lbl({ Size=UDim2.new(1,0,1,0), Text="✦", TextColor3=C.Flame,
+          TextSize=13, Font=Enum.Font.Code,
+          TextXAlignment=Enum.TextXAlignment.Center, ZIndex=8 }, logo)
+
+    -- Title
+    Lbl({ Size=UDim2.new(0,110,1,0), Position=UDim2.new(0,48,0,0),
+          Text=self.Title, TextColor3=C.TextPrimary,
+          TextSize=13, Font=Enum.Font.GothamMedium, ZIndex=7 }, tb)
+
+    -- Version badge
+    local vb = New("Frame",{
+        Size=UDim2.new(0,44,0,18),
+        Position=UDim2.new(0,158,.5,-9),
+        BackgroundColor3=C.BgSurface,
+        BorderSizePixel=0, ZIndex=7,
+    }, tb)
+    Corner(4,vb); Stroke(C.Border,.92,1,vb)
+    Lbl({ Size=UDim2.new(1,0,1,0), Text=self.Version,
+          TextColor3=C.TextMuted, TextSize=10, Font=Enum.Font.Code,
+          TextXAlignment=Enum.TextXAlignment.Center, ZIndex=8 }, vb)
+
+    -- Window control helper
+    local function WCtrl(glyph, xOff, hbg, hfg)
+        local b = TBtn({
+            Size=UDim2.new(0,27,0,27),
+            Position=UDim2.new(1,xOff,.5,-13),
+            BackgroundColor3=C.BgSurface,
+            Text=glyph, TextColor3=C.TextMuted,
+            TextSize=11, Font=Enum.Font.Code, ZIndex=7,
+        }, tb)
+        Corner(5,b); Stroke(C.Border,.92,1,b)
+        b.MouseEnter:Connect(function()
+            Tween(b,{BackgroundColor3=hbg},.12); b.TextColor3=hfg end)
+        b.MouseLeave:Connect(function()
+            Tween(b,{BackgroundColor3=C.BgSurface},.12); b.TextColor3=C.TextMuted end)
+        return b
+    end
+
+    local closeB = WCtrl("✕", -14-27,
+        Color3.fromHex("2A0E14"), C.Error)
+    local minB   = WCtrl("─", -14-27-5-27,
+        Color3.fromHex("1E1600"), C.Warning)
+
+    closeB.MouseButton1Click:Connect(function()
+        self._dead = true
+        Tween(self.Win,{BackgroundTransparency=1},.2)
+        task.delay(.22, function() pcall(function() self.ScreenGui:Destroy() end) end)
+    end)
+
+    local minimized = false
+    minB.MouseButton1Click:Connect(function()
+        minimized = not minimized
+        Tween(self.Body,{ Size=UDim2.new(1,0,0, minimized and 0 or self.H-46-26) },.24)
+        Tween(self.SBar,{ Position=UDim2.new(0,0,0, minimized and 46 or self.H-26) },.24)
+    end)
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  BODY  (sidebar + content)
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:_Body()
+    local BH = self.H-46-26
+    local SW = 178
+
+    self.Body = New("Frame",{
+        Name="Body",
+        Size=UDim2.new(1,0,0,BH),
+        Position=UDim2.new(0,0,0,46),
+        BackgroundTransparency=1,
+        ClipsDescendants=true,
+        BorderSizePixel=0,
+    }, self.Win)
+
+    -- ── Sidebar ──────────────────────────────────────────────
+    local sb = New("Frame",{
+        Name="Sidebar",
+        Size=UDim2.new(0,SW,1,0),
+        BackgroundColor3=C.BgVoid,
+        BorderSizePixel=0,
+    }, self.Body)
+    self.Sidebar = sb
+
+    -- Right border line
+    New("Frame",{
+        Size=UDim2.new(0,1,1,0),
+        Position=UDim2.new(1,-1,0,0),
+        BackgroundColor3=C.Border,
+        BackgroundTransparency=.92,
+        BorderSizePixel=0,
+    }, sb)
+
+    local sbScroll = New("ScrollingFrame",{
+        Size=UDim2.new(1,0,1,0),
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+        ScrollBarThickness=0,
+        CanvasSize=UDim2.new(0,0,0,0),
+        AutomaticCanvasSize=Enum.AutomaticSize.Y,
+    }, sb)
+
+    self.SbList = New("Frame",{
+        Name="SbList",
+        Size=UDim2.new(1,-14,0,0),
+        Position=UDim2.new(0,7,0,8),
+        BackgroundTransparency=1,
+        AutomaticSize=Enum.AutomaticSize.Y,
+    }, sbScroll)
+    List(Enum.FillDirection.Vertical,
+        Enum.VerticalAlignment.Top,
+        Enum.HorizontalAlignment.Left, 1, self.SbList)
+
+    -- ── Content ──────────────────────────────────────────────
+    self.ContentScroll = New("ScrollingFrame",{
+        Name="Content",
+        Size=UDim2.new(1,-SW,1,0),
+        Position=UDim2.new(0,SW,0,0),
+        BackgroundColor3=C.BgPanel,
+        BorderSizePixel=0,
+        ScrollBarThickness=3,
+        ScrollBarImageColor3=C.BgActive,
+        CanvasSize=UDim2.new(0,0,0,0),
+        AutomaticCanvasSize=Enum.AutomaticSize.Y,
+    }, self.Body)
+
+    self.CPad = New("Frame",{
+        Name="CPad",
+        Size=UDim2.new(1,-28,0,0),
+        Position=UDim2.new(0,14,0,14),
+        BackgroundTransparency=1,
+        AutomaticSize=Enum.AutomaticSize.Y,
+    }, self.ContentScroll)
+    List(Enum.FillDirection.Vertical,
+        Enum.VerticalAlignment.Top,
+        Enum.HorizontalAlignment.Left, 0, self.CPad)
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  STATUS BAR
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:_StatusBar()
+    self.SBar = New("Frame",{
+        Name="SBar",
+        Size=UDim2.new(1,0,0,26),
+        Position=UDim2.new(0,0,0,self.H-26),
+        BackgroundColor3=C.BgVoid,
+        BorderSizePixel=0, ZIndex=5,
+    }, self.Win)
+    Corner(14,self.SBar)
+    -- square top
+    New("Frame",{Size=UDim2.new(1,0,0,14),
+        BackgroundColor3=C.BgVoid,BorderSizePixel=0,ZIndex=4},self.SBar)
+    -- top border
+    New("Frame",{Size=UDim2.new(1,0,0,1),
+        BackgroundColor3=C.Border,BackgroundTransparency=.92,
+        BorderSizePixel=0,ZIndex=5},self.SBar)
+
+    self.SBarRow = New("Frame",{
+        Size=UDim2.new(1,-28,1,0),
+        Position=UDim2.new(0,14,0,0),
+        BackgroundTransparency=1, ZIndex=6,
+    }, self.SBar)
+    List(Enum.FillDirection.Horizontal,
+        Enum.VerticalAlignment.Center,
+        Enum.HorizontalAlignment.Left, 8, self.SBarRow)
+
+    -- Online pulse dot
+    local dot = New("Frame",{
+        Size=UDim2.new(0,5,0,5),
+        BackgroundColor3=C.Success,
+        BorderSizePixel=0,LayoutOrder=0,ZIndex=7,
+    }, self.SBarRow)
+    Corner(999,dot)
+    self.SBarDot = dot
+
+    spawn(function()
+        while not self._dead do
+            Tween(dot,{BackgroundTransparency=.6},1.2,Enum.EasingStyle.Sine)
+            task.wait(1.2)
+            Tween(dot,{BackgroundTransparency=0},1.2,Enum.EasingStyle.Sine)
+            task.wait(1.2)
+        end
+    end)
+
+    self._sbarItems = {}
+    self:SetStatus({
+        {"Ready", C.Flame},
+        {"ClaudeUI "..self.Version, nil},
+    })
+end
+
+function ClaudeUI:SetStatus(items)
+    for _,v in pairs(self._sbarItems) do pcall(function() v:Destroy() end) end
+    self._sbarItems = {}
+    for i,item in ipairs(items) do
+        if i>1 then
+            local sep = New("Frame",{
+                Size=UDim2.new(0,1,0,10),
+                BackgroundColor3=C.Border,
+                BackgroundTransparency=.88,
+                BorderSizePixel=0,
+                LayoutOrder=i*2-1, ZIndex=7,
+            }, self.SBarRow)
+            table.insert(self._sbarItems, sep)
+        end
+        local l = Lbl({
+            Size=UDim2.new(0,0,1,0),
+            AutomaticSize=Enum.AutomaticSize.X,
+            Text=item[1],
+            TextColor3=item[2] or C.TextMuted,
+            TextSize=10, Font=Enum.Font.Code,
+            LayoutOrder=i*2, ZIndex=7,
+        }, self.SBarRow)
+        table.insert(self._sbarItems, l)
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  SIDEBAR HELPERS  (public)
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddSidebarLabel(text)
+    local w = New("Frame",{
+        Size=UDim2.new(1,0,0,26),
+        BackgroundTransparency=1,
+    }, self.SbList)
+    Pad(9,0,8,0,w)
+    Lbl({
+        Size=UDim2.new(1,0,1,0),
+        Text=text:upper(),
+        TextColor3=C.TextDim,
+        TextSize=8, Font=Enum.Font.Code,
+    }, w)
+    return w
+end
+
+function ClaudeUI:AddSidebarDivider()
+    local w = New("Frame",{
+        Size=UDim2.new(1,0,0,13),
+        BackgroundTransparency=1,
+    }, self.SbList)
+    New("Frame",{
+        Size=UDim2.new(1,-8,0,1),
+        Position=UDim2.new(0,4,.5,0),
+        BackgroundColor3=C.Border,
+        BackgroundTransparency=.90,
+        BorderSizePixel=0,
+    }, w)
+    return w
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  TABS
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddTab(cfg)
+    cfg = cfg or {}
+    local tab = { Name=cfg.Name or "Tab", Icon=cfg.Icon }
+
+    -- Sidebar button
+    local btn = TBtn({
+        Name="Tab_"..tab.Name,
+        Size=UDim2.new(1,0,0,32),
+        BackgroundColor3=C.BgVoid,
+        BackgroundTransparency=1,
+        Text="", BorderSizePixel=0,
+    }, self.SbList)
+    Corner(6,btn)
+
+    -- Accent bar (shown when active)
+    local bar = New("Frame",{
+        Size=UDim2.new(0,3,.55,0),
+        Position=UDim2.new(0,0,.225,0),
+        BackgroundColor3=C.FlameBright,
+        BorderSizePixel=0, Visible=false,
+    }, btn)
+    Corner(3,bar)
+
+    -- Icon element
+    local iconEl
+    if tab.Icon then
+        local ri = RIcon(tab.Icon)
+        if ri.kind == "image" then
+            iconEl = New("ImageLabel",{
+                Size=UDim2.new(0,15,0,15),
+                Position=UDim2.new(0,9,.5,-7),
+                BackgroundTransparency=1,
+                Image=ri.value,
+                ImageColor3=C.TextSecondary,
+                ScaleType=Enum.ScaleType.Fit,
+                ZIndex=2,
+            }, btn)
+        else
+            iconEl = Lbl({
+                Size=UDim2.new(0,16,1,0),
+                Position=UDim2.new(0,9,0,0),
+                Text=ri.glyph,
+                TextColor3=C.TextSecondary,
+                TextSize=13, Font=Enum.Font.Code, ZIndex=2,
+            }, btn)
+        end
+    end
+
+    local xOff = tab.Icon and 31 or 9
+    local nameLbl = Lbl({
+        Size=UDim2.new(1,-(xOff+8),1,0),
+        Position=UDim2.new(0,xOff,0,0),
+        Text=tab.Name,
+        TextColor3=C.TextMuted,
+        TextSize=12, Font=Enum.Font.Gotham, ZIndex=2,
+    }, btn)
+
+    -- Content pane
+    local pane = New("Frame",{
+        Name="Pane_"..tab.Name,
+        Size=UDim2.new(1,0,0,0),
+        BackgroundTransparency=1,
+        Visible=false,
+        AutomaticSize=Enum.AutomaticSize.Y,
+    }, self.CPad)
+    List(Enum.FillDirection.Vertical,
+        Enum.VerticalAlignment.Top,
+        Enum.HorizontalAlignment.Left, 9, pane)
+
+    tab.Btn=btn; tab.Bar=bar; tab.IconEl=iconEl
+    tab.NameLbl=nameLbl; tab.Pane=pane
+
+    btn.MouseEnter:Connect(function()
+        if self.ActiveTab~=tab then
+            Tween(btn,{BackgroundTransparency=0,BackgroundColor3=C.BgSurface},.12)
+            nameLbl.TextColor3=C.TextSecondary
+        end
+    end)
+    btn.MouseLeave:Connect(function()
+        if self.ActiveTab~=tab then
+            Tween(btn,{BackgroundTransparency=1},.12)
+            nameLbl.TextColor3=C.TextMuted
+        end
+    end)
+    btn.MouseButton1Click:Connect(function() self:SelectTab(tab) end)
+
+    table.insert(self.Tabs, tab)
+    if #self.Tabs==1 then self:SelectTab(tab) end
+    return tab
+end
+
+function ClaudeUI:SelectTab(tab)
+    for _,t in pairs(self.Tabs) do
+        t.Pane.Visible=false; t.Bar.Visible=false
+        Tween(t.Btn,{BackgroundTransparency=1},.12)
+        t.NameLbl.TextColor3=C.TextMuted
+        t.NameLbl.Font=Enum.Font.Gotham
+        if t.IconEl then
+            if t.IconEl:IsA("ImageLabel") then
+                Tween(t.IconEl,{ImageColor3=C.TextSecondary},.12)
+            else t.IconEl.TextColor3=C.TextSecondary end
+        end
+    end
+    self.ActiveTab=tab
+    tab.Pane.Visible=true; tab.Bar.Visible=true
+    Tween(tab.Btn,{BackgroundTransparency=0,BackgroundColor3=C.BgSurface},.14)
+    tab.NameLbl.TextColor3=C.TextBright
+    tab.NameLbl.Font=Enum.Font.GothamBold
+    if tab.IconEl then
+        if tab.IconEl:IsA("ImageLabel") then
+            Tween(tab.IconEl,{ImageColor3=C.Flame},.14)
+        else tab.IconEl.TextColor3=C.Flame end
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  WELCOME CARD  — hero row matching the original HTML
+--  cfg: Avatar (icon/glyph), Name, Tag, SubText
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddWelcomeCard(tab, cfg)
+    cfg = cfg or {}
+
+    local frame = New("Frame",{
+        Name="WelcomeCard",
+        Size=UDim2.new(1,0,0,80),
+        BackgroundColor3=C.BgSurface,
+        BorderSizePixel=0,
+        LayoutOrder=0,
+    }, tab.Pane)
+    Corner(11,frame); Stroke(C.Border,.945,1,frame)
+    Pad(16,16,12,12,frame)
+
+    -- ── Pulsing outer ring ────────────────────────────────────
+    local ring = New("Frame",{
+        Size=UDim2.new(0,60,0,60),
+        BackgroundTransparency=1,
+        BorderSizePixel=0,
+    }, frame)
+    Corner(17,ring); Stroke(C.Flame,.88,1,ring)
+
+    -- Avatar box
+    local av = New("Frame",{
+        Size=UDim2.new(0,52,0,52),
+        Position=UDim2.new(0,4,0,4),
+        BackgroundColor3=C.BgActive,
+        BorderSizePixel=0,
+    }, ring)
+    Corner(14,av); Stroke(C.Flame,.72,1.5,av)
+
+    -- Avatar icon
+    if cfg.Avatar then
+        local ri = RIcon(cfg.Avatar)
+        PlaceIcon(ri, 22, av, {
+            Size=UDim2.new(1,0,1,0),
+            Position=UDim2.new(0,0,0,0),
+            Color=C.White,
+        })
+    end
+
+    -- Online dot
+    local odot = New("Frame",{
+        Size=UDim2.new(0,11,0,11),
+        Position=UDim2.new(0,45,0,45),
+        BackgroundColor3=C.Success,
+        BorderSizePixel=0,
+    }, ring)
+    Corner(999,odot); Stroke(C.BgSurface,0,2,odot)
+
+    -- Ring pulse animation
+    local ringStroke = ring:FindFirstChildOfClass("UIStroke")
+    spawn(function()
+        while not self._dead and frame.Parent do
+            if ringStroke then
+                Tween(ringStroke,{Transparency=.55},1.6,Enum.EasingStyle.Sine)
+            end
+            task.wait(1.6)
+            if ringStroke then
+                Tween(ringStroke,{Transparency=.88},1.6,Enum.EasingStyle.Sine)
+            end
+            task.wait(1.6)
+        end
+    end)
+
+    -- ── Info ─────────────────────────────────────────────────
+    local IX = 76
+
+    Lbl({
+        Size=UDim2.new(1,-(IX+112),0,22),
+        Position=UDim2.new(0,IX,0,9),
+        Text=cfg.Name or "Player",
+        TextColor3=C.TextBright,
+        TextSize=16, Font=Enum.Font.GothamBold,
+    }, frame)
+
+    -- Sub row (sub text + tag badge)
+    local subRow = New("Frame",{
+        Size=UDim2.new(1,-(IX+112),0,16),
+        Position=UDim2.new(0,IX,0,35),
+        BackgroundTransparency=1,
+    }, frame)
+    List(Enum.FillDirection.Horizontal,
+        Enum.VerticalAlignment.Center,
+        Enum.HorizontalAlignment.Left, 6, subRow)
+
+    Lbl({
+        Size=UDim2.new(0,0,1,0),
+        AutomaticSize=Enum.AutomaticSize.X,
+        Text=cfg.SubText or "Member",
+        TextColor3=C.TextSecondary,
+        TextSize=11, Font=Enum.Font.Gotham,
+        LayoutOrder=0,
+    }, subRow)
+
+    if cfg.Tag then
+        local tagF = New("Frame",{
+            Size=UDim2.new(0,0,1,0),
+            AutomaticSize=Enum.AutomaticSize.X,
+            BackgroundColor3=Color3.fromHex("221810"),
+            BorderSizePixel=0,
+            LayoutOrder=1,
+        }, subRow)
+        Corner(4,tagF); Stroke(C.Flame,.78,1,tagF); Pad(6,6,0,0,tagF)
+        Lbl({
+            Size=UDim2.new(0,0,1,0),
+            AutomaticSize=Enum.AutomaticSize.X,
+            Text=cfg.Tag,
+            TextColor3=C.Flame,
+            TextSize=10, Font=Enum.Font.Code,
+        }, tagF)
+    end
+
+    -- ── Clock block ───────────────────────────────────────────
+    local clockLbl = Lbl({
+        Size=UDim2.new(0,100,0,24),
+        Position=UDim2.new(1,-100,0,8),
+        Text="00:00:00",
+        TextColor3=C.TextPrimary,
+        TextSize=20, Font=Enum.Font.Code,
+        TextXAlignment=Enum.TextXAlignment.Right,
+    }, frame)
+
+    local dateLbl = Lbl({
+        Size=UDim2.new(0,100,0,13),
+        Position=UDim2.new(1,-100,0,38),
+        Text="00 · 00 · 0000",
+        TextColor3=C.TextMuted,
+        TextSize=9, Font=Enum.Font.Code,
+        TextXAlignment=Enum.TextXAlignment.Right,
+    }, frame)
+
+    -- Blinking colon via state
+    local colonOn = true
+    local conn
+    conn = RunService.Heartbeat:Connect(function()
+        if self._dead or not frame.Parent then conn:Disconnect(); return end
+        local t = os.date("*t")
+        local sep = colonOn and ":" or " "
+        colonOn = not colonOn -- toggled via seconds parity for blinking effect
+        colonOn = (os.clock()*2)%2 < 1  -- true blinking ~1Hz
+        local s = string.format("%02d%s%02d%s%02d",
+            t.hour, colonOn and ":" or " ",
+            t.min,  colonOn and ":" or " ",
+            t.sec)
+        clockLbl.Text = s
+        dateLbl.Text  = string.format("%02d · %02d · %04d",t.day,t.month,t.year)
+    end)
+
+    return frame
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  MINI CARDS ROW  — 3-column grid below the welcome card
+--  items: { Title, Sub, Icon, Accent (hex "#RRGGBB"), Callback }
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddMiniRow(tab, items)
+    items = items or {}
+    local n = math.max(#items, 1)
+
+    local row = New("Frame",{
+        Name="MiniRow",
+        Size=UDim2.new(1,0,0,86),
+        BackgroundTransparency=1,
+        LayoutOrder=1,
+    }, tab.Pane)
+
+    New("UIGridLayout",{
+        CellSize     = UDim2.new(1/n, -(8*(n-1)/n), 1, 0),
+        CellPaddingH = UDim.new(0,8),
+        CellPaddingV = UDim.new(0,0),
+        SortOrder    = Enum.SortOrder.LayoutOrder,
+    }, row)
+
+    for i, item in ipairs(items) do
+        local acc = item.Accent
+            and Color3.fromHex(item.Accent:gsub("#",""))
+            or C.Flame
+        local aD = Color3.new(acc.R*.14, acc.G*.14, acc.B*.14)
+
+        local card = TBtn({
+            Name="MC_"..i,
+            BackgroundColor3=C.BgSurface,
+            Text="", BorderSizePixel=0,
+            LayoutOrder=i,
+        }, row)
+        Corner(11,card); Stroke(C.Border,.945,1,card)
+        Pad(13,13,12,11,card)
+
+        -- Icon chip
+        local chip = New("Frame",{
+            Size=UDim2.new(0,30,0,30),
+            BackgroundColor3=aD,
+            BorderSizePixel=0,
+        }, card)
+        Corner(9,chip)
+        if item.Icon then
+            local ri = RIcon(item.Icon)
+            PlaceIcon(ri,14,chip,{
+                Size    = UDim2.new(0,14,0,14),
+                Position= UDim2.new(.5,-7,.5,-7),
+                Color   = acc, ZIndex=2,
+            })
+        end
+
+        -- Title
+        Lbl({
+            Size=UDim2.new(1,0,0,16),
+            Position=UDim2.new(0,0,0,38),
+            Text=item.Title or "",
+            TextColor3=C.TextBright,
+            TextSize=12, Font=Enum.Font.GothamBold,
+        }, card)
+
+        -- Sub
+        Lbl({
+            Size=UDim2.new(1,0,0,14),
+            Position=UDim2.new(0,0,0,56),
+            Text=item.Sub or "",
+            TextColor3=C.TextSecondary,
+            TextSize=10, Font=Enum.Font.Gotham,
+        }, card)
+
+        card.MouseEnter:Connect(function()
+            Tween(card,{BackgroundColor3=C.BgHover},.14) end)
+        card.MouseLeave:Connect(function()
+            Tween(card,{BackgroundColor3=C.BgSurface},.14) end)
+        card.MouseButton1Down:Connect(function()
+            Tween(card,{BackgroundColor3=C.BgActive},.07) end)
+        card.MouseButton1Click:Connect(function()
+            Tween(card,{BackgroundColor3=C.BgSurface},.14)
+            if item.Callback then item.Callback() end
+        end)
+    end
+
+    return row
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  CARD  — content card with optional title/icon header
+--  cfg.TwoColumn = true  → 2-column UIGridLayout inside
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddCard(tab, cfg)
+    cfg = cfg or {}
+
+    local card = New("Frame",{
+        Name="Card_"..(cfg.Title or "Card"),
+        Size=UDim2.new(1,0,0,0),
+        BackgroundColor3=C.BgSurface,
+        BorderSizePixel=0,
+        AutomaticSize=Enum.AutomaticSize.Y,
+        LayoutOrder=cfg.Order or (#self.Tabs*100),
+    }, tab.Pane)
+    Corner(11,card); Stroke(C.Border,.945,1,card)
+    Pad(13,13,13,13,card)
+
+    local inner = New("Frame",{
+        Name="Inner",
+        Size=UDim2.new(1,0,0,0),
+        BackgroundTransparency=1,
+        AutomaticSize=Enum.AutomaticSize.Y,
+    }, card)
+
+    if cfg.TwoColumn then
+        New("UIGridLayout",{
+            CellSize     = UDim2.new(.5,-5,0,0),
+            CellPaddingH = UDim.new(0,8),
+            CellPaddingV = UDim.new(0,8),
+            SortOrder    = Enum.SortOrder.LayoutOrder,
+        }, inner)
+    else
+        List(Enum.FillDirection.Vertical,
+            Enum.VerticalAlignment.Top,
+            Enum.HorizontalAlignment.Left, 9, inner)
+    end
+
+    -- Header
+    if cfg.Title then
+        local hdr = New("Frame",{
+            Name="Header",
+            Size=UDim2.new(1,0,0,24),
+            BackgroundTransparency=1,
+            LayoutOrder=0,
+        }, inner)
+
+        -- Icon chip
+        local chip = New("Frame",{
+            Size=UDim2.new(0,24,0,24),
+            BackgroundColor3=Color3.fromHex("221810"),
+            BorderSizePixel=0,
+        }, hdr)
+        Corner(7,chip)
+
+        if cfg.Icon then
+            local ri = RIcon(cfg.Icon)
+            PlaceIcon(ri,13,chip,{
+                Size    =UDim2.new(0,13,0,13),
+                Position=UDim2.new(.5,-6.5,.5,-6.5),
+                Color   =C.Flame, ZIndex=2,
+            })
+        end
+
+        Lbl({
+            Size=UDim2.new(1,-34,1,0),
+            Position=UDim2.new(0,34,0,0),
+            Text=cfg.Title,
+            TextColor3=C.TextPrimary,
+            TextSize=12, Font=Enum.Font.GothamBold,
+        }, hdr)
+    end
+
+    local obj = { Frame=card, List=inner, _tab=tab, _lo=10 }
+    return obj
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  BUTTON
+--  cfg.Style: "Primary" | "Ghost" | "Danger"
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddButton(card, cfg)
+    cfg = cfg or {}
+    local sty = cfg.Style or "Primary"
+
+    local bg  = sty=="Primary" and C.Flame
+             or sty=="Danger"  and Color3.fromHex("1E0A0D")
+             or C.BgSurface2
+    local fg  = sty=="Primary" and Color3.fromHex("1A0E08")
+             or sty=="Danger"  and C.Error
+             or C.TextSecondary
+    local hbg = sty=="Primary" and C.FlameBright
+             or sty=="Danger"  and Color3.fromHex("2E1215")
+             or C.BgHover
+
+    card._lo = card._lo+1
+    local b = TBtn({
+        Name="Btn_"..(cfg.Text or "Btn"),
+        Size=UDim2.new(1,0,0,30),
+        BackgroundColor3=bg,
+        Text="", BorderSizePixel=0,
+        LayoutOrder=cfg.Order or card._lo,
+    }, card.List)
+    Corner(5,b)
+    if sty~="Primary" then
+        Stroke(sty=="Danger" and C.Error or C.Border,
+               sty=="Danger" and .78      or .92, 1, b)
+    end
+
+    -- Inner layout for icon+text
+    local inn = New("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1},b)
+    List(Enum.FillDirection.Horizontal,Enum.VerticalAlignment.Center,
+        Enum.HorizontalAlignment.Center, 6, inn)
+
+    if cfg.Icon then
+        local ri = RIcon(cfg.Icon)
+        PlaceIcon(ri,12,inn,{
+            Size=UDim2.new(0,12,0,12),
+            Position=UDim2.new(0,0,0,0),
+            Color=fg, ZIndex=2,
+        })
+    end
+
+    Lbl({
+        Size=UDim2.new(0,0,1,0),
+        AutomaticSize=Enum.AutomaticSize.X,
+        Text=cfg.Text or "Button",
+        TextColor3=fg, TextSize=12,
+        Font=Enum.Font.GothamMedium, ZIndex=2,
+    }, inn)
+
+    b.MouseEnter:Connect(function() Tween(b,{BackgroundColor3=hbg},.12) end)
+    b.MouseLeave:Connect(function() Tween(b,{BackgroundColor3=bg},.12) end)
+    b.MouseButton1Down:Connect(function()
+        Tween(b,{Size=UDim2.new(.97,0,0,28)},.07) end)
+    b.MouseButton1Up:Connect(function()
+        Tween(b,{Size=UDim2.new(1,0,0,30)},.12) end)
+    b.MouseButton1Click:Connect(function()
+        if cfg.Callback then cfg.Callback() end end)
+    return b
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  TOGGLE
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddToggle(card, cfg)
+    cfg = cfg or {}
+    local state = cfg.Default==true
+    local H = cfg.Description and 48 or 36
+
+    card._lo = card._lo+1
+    local row = New("Frame",{
+        Name="Tgl_"..(cfg.Text or "Tgl"),
+        Size=UDim2.new(1,0,0,H),
+        BackgroundTransparency=1,
+        LayoutOrder=cfg.Order or card._lo,
+    }, card.List)
+
+    Lbl({
+        Size=UDim2.new(1,-48,0,18),
+        Position=UDim2.new(0,0,0,cfg.Description and 3 or 9),
+        Text=cfg.Text or "Toggle",
+        TextColor3=C.TextPrimary,
+        TextSize=12, Font=Enum.Font.GothamMedium,
+    }, row)
+
+    if cfg.Description then
+        Lbl({
+            Size=UDim2.new(1,-48,0,13),
+            Position=UDim2.new(0,0,0,24),
+            Text=cfg.Description,
+            TextColor3=C.TextMuted,
+            TextSize=10, Font=Enum.Font.Gotham,
+        }, row)
+    end
+
+    local track = New("Frame",{
+        Size=UDim2.new(0,34,0,18),
+        Position=UDim2.new(1,-34,.5,-9),
+        BackgroundColor3=C.BgActive,
+        BorderSizePixel=0,
+    }, row)
+    Corner(999,track); Stroke(C.Border,.92,1,track)
+
+    local thumb = New("Frame",{
+        Size=UDim2.new(0,12,0,12),
+        Position=UDim2.new(0,2,.5,-6),
+        BackgroundColor3=C.TextMuted,
+        BorderSizePixel=0,
+    }, track)
+    Corner(999,thumb)
+
+    local function Refresh()
+        Tween(track,{BackgroundColor3=state and C.Flame or C.BgActive},.18)
+        Tween(thumb,{
+            Position=state and UDim2.new(0,18,.5,-6) or UDim2.new(0,2,.5,-6),
+            BackgroundColor3=state and C.White or C.TextMuted,
+        },.2)
+    end
+    Refresh()
+
+    local hit = TBtn({Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text=""},row)
+    hit.MouseButton1Click:Connect(function()
+        state=not state; Refresh()
+        if cfg.Callback then cfg.Callback(state) end
+    end)
+
+    local api={}
+    function api:Set(v) state=v; Refresh() end
+    function api:Get()  return state end
+    api.Row=row; return api
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  SLIDER
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddSlider(card, cfg)
+    cfg = cfg or {}
+    local mn   = cfg.Min     or 0
+    local mx   = cfg.Max     or 100
+    local step = cfg.Step    or 1
+    local cur  = math.clamp(cfg.Default or mn, mn, mx)
+
+    card._lo = card._lo+1
+    local wrap = New("Frame",{
+        Name="Sld_"..(cfg.Text or "Sld"),
+        Size=UDim2.new(1,0,0,52),
+        BackgroundTransparency=1,
+        LayoutOrder=cfg.Order or card._lo,
+    }, card.List)
+
+    Lbl({
+        Size=UDim2.new(1,-60,0,18),
+        Text=cfg.Text or "Slider",
+        TextColor3=C.TextPrimary,
+        TextSize=12, Font=Enum.Font.GothamMedium,
+    }, wrap)
+
+    -- Value badge
+    local vF = New("Frame",{
+        Size=UDim2.new(0,52,0,18),
+        Position=UDim2.new(1,-52,0,0),
+        BackgroundColor3=Color3.fromHex("221810"),
+        BorderSizePixel=0,
+    }, wrap)
+    Corner(4,vF); Stroke(C.Flame,.78,1,vF)
+    local vL = Lbl({
+        Size=UDim2.new(1,0,1,0),
+        Text=tostring(cur),
+        TextColor3=C.Flame, TextSize=10, Font=Enum.Font.Code,
+        TextXAlignment=Enum.TextXAlignment.Center,
+    }, vF)
+
+    -- Track
+    local trk = New("Frame",{
+        Size=UDim2.new(1,0,0,3),
+        Position=UDim2.new(0,0,0,34),
+        BackgroundColor3=C.BgActive,
+        BorderSizePixel=0,
+    }, wrap)
+    Corner(999,trk)
+
+    local p0 = (cur-mn)/(mx-mn)
+    local fill = New("Frame",{
+        Size=UDim2.new(p0,0,1,0),
+        BackgroundColor3=C.Flame,
+        BorderSizePixel=0,
+    }, trk)
+    Corner(999,fill)
+
+    local thmb = New("Frame",{
+        Size=UDim2.new(0,13,0,13),
+        AnchorPoint=Vector2.new(.5,.5),
+        Position=UDim2.new(p0,0,.5,0),
+        BackgroundColor3=C.White,
+        BorderSizePixel=0,
+    }, trk)
+    Corner(999,thmb); Stroke(C.Flame,.3,2,thmb)
+
+    local dz = TBtn({
+        Size=UDim2.new(1,0,0,24),Position=UDim2.new(0,0,0,-11),
+        BackgroundTransparency=1, Text="",
+    }, trk)
+
+    local function SetVal(pct)
+        pct = math.clamp(pct,0,1)
+        cur = math.round((mn+pct*(mx-mn))/step)*step
+        cur = math.clamp(cur,mn,mx)
+        local rp = (cur-mn)/(mx-mn)
+        fill.Size=UDim2.new(rp,0,1,0)
+        thmb.Position=UDim2.new(rp,0,.5,0)
+        vL.Text=tostring(cur)
+        if cfg.Callback then cfg.Callback(cur) end
+    end
+
+    local drag=false
+    dz.MouseButton1Down:Connect(function(x)
+        drag=true; SetVal((x-trk.AbsolutePosition.X)/trk.AbsoluteSize.X) end)
+    UserInputService.InputChanged:Connect(function(i)
+        if drag and i.UserInputType==Enum.UserInputType.MouseMovement then
+            SetVal((i.Position.X-trk.AbsolutePosition.X)/trk.AbsoluteSize.X) end end)
+    UserInputService.InputEnded:Connect(function(i)
+        if i.UserInputType==Enum.UserInputType.MouseButton1 then drag=false end end)
+
+    local api={}
+    function api:Set(v) SetVal((math.clamp(v,mn,mx)-mn)/(mx-mn)) end
+    function api:Get()  return cur end
+    return api
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  INPUT
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddInput(card, cfg)
+    cfg = cfg or {}
+    card._lo = card._lo+1
+
+    local wH   = cfg.Label and 48 or 30
+    local yOff = cfg.Label and 16 or 0
+
+    local wrap = New("Frame",{
+        Name="Inp",
+        Size=UDim2.new(1,0,0,wH),
+        BackgroundTransparency=1,
+        LayoutOrder=cfg.Order or card._lo,
+    }, card.List)
+
+    if cfg.Label then
+        Lbl({
+            Size=UDim2.new(1,0,0,13),
+            Text=cfg.Label,
+            TextColor3=C.TextMuted,
+            TextSize=10, Font=Enum.Font.Code,
+        }, wrap)
+    end
+
+    local frame = New("Frame",{
+        Size=UDim2.new(1,0,0,30),
+        Position=UDim2.new(0,0,0,yOff),
+        BackgroundColor3=C.BgDeep,
+        BorderSizePixel=0,
+    }, wrap)
+    Corner(5,frame)
+    local sk = Stroke(C.Border,.945,1,frame)
+
+    local xPad = 10
+    if cfg.Icon then
+        xPad = 30
+        local ri = RIcon(cfg.Icon)
+        if ri.kind=="image" then
+            New("ImageLabel",{
+                Size=UDim2.new(0,13,0,13),
+                Position=UDim2.new(0,9,.5,-6.5),
+                BackgroundTransparency=1,
+                Image=ri.value,
+                ImageColor3=C.TextMuted,
+                ScaleType=Enum.ScaleType.Fit,
+                ZIndex=2,
+            }, frame)
+        else
+            Lbl({
+                Size=UDim2.new(0,16,1,0),
+                Position=UDim2.new(0,8,0,0),
+                Text=ri.glyph,
+                TextColor3=C.TextMuted,
+                TextSize=12, Font=Enum.Font.Code,
+                TextXAlignment=Enum.TextXAlignment.Center,
+                ZIndex=2,
+            }, frame)
+        end
+    end
+
+    local box = New("TextBox",{
+        Size=UDim2.new(1,-(xPad+6),1,0),
+        Position=UDim2.new(0,xPad,0,0),
+        BackgroundTransparency=1,
+        Text=cfg.Default or "",
+        PlaceholderText=cfg.PlaceHolder or "Type here…",
+        PlaceholderColor3=C.TextDim,
+        TextColor3=C.TextPrimary,
+        TextSize=12, Font=Enum.Font.Gotham,
+        TextXAlignment=Enum.TextXAlignment.Left,
+        ClearTextOnFocus=false,
+    }, frame)
+
+    box.Focused:Connect(function()
+        Tween(sk,{Color=C.Flame,Transparency=.55},.15) end)
+    box.FocusLost:Connect(function(enter)
+        Tween(sk,{Color=C.Border,Transparency=.945},.15)
+        if cfg.Callback then cfg.Callback(box.Text, enter) end
+    end)
+
+    return box
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  DROPDOWN
+--  Options: { Text, Value (opt), Color (hex opt), Tag (opt) }
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddDropdown(card, cfg)
+    cfg = cfg or {}
+    local opts   = cfg.Options or {}
+    local IH     = 28
+    local LH     = #opts*(IH+1)+8
+    local sel    = cfg.Default or (opts[1] and opts[1].Text) or ""
+    local isOpen = false
+
+    card._lo = card._lo+1
+    local yOff = cfg.Label and 14 or 0
+
+    local outer = New("Frame",{
+        Name="DD_"..(cfg.Text or "DD"),
+        Size=UDim2.new(1,0,0,yOff+30),
+        BackgroundTransparency=1,
+        ClipsDescendants=false,
+        LayoutOrder=cfg.Order or card._lo,
+    }, card.List)
+
+    if cfg.Label then
+        Lbl({
+            Size=UDim2.new(1,0,0,12),
+            Text=cfg.Label,
+            TextColor3=C.TextDim,
+            TextSize=9, Font=Enum.Font.Code,
+        }, outer)
+    end
+
+    local hdr = TBtn({
+        Size=UDim2.new(1,0,0,30),
+        Position=UDim2.new(0,0,0,yOff),
+        BackgroundColor3=C.BgDeep,
+        Text="", BorderSizePixel=0,
+    }, outer)
+    Corner(5,hdr)
+    local hSk = Stroke(C.Border,.945,1,hdr)
+
+    local selLbl = Lbl({
+        Size=UDim2.new(1,-28,1,0),
+        Position=UDim2.new(0,10,0,0),
+        Text=sel,
+        TextColor3=C.TextPrimary,
+        TextSize=12, Font=Enum.Font.Gotham,
+    }, hdr)
+
+    local arrow = Lbl({
+        Size=UDim2.new(0,18,1,0),
+        Position=UDim2.new(1,-20,0,0),
+        Text="▾",
+        TextColor3=C.TextMuted,
+        TextSize=9, Font=Enum.Font.Code,
+        TextXAlignment=Enum.TextXAlignment.Center,
+    }, hdr)
+
+    -- Body
+    local body = New("Frame",{
+        Size=UDim2.new(1,0,0,0),
+        Position=UDim2.new(0,0,0,yOff+30),
+        BackgroundColor3=C.BgSurface2,
+        BorderSizePixel=0,
+        Visible=false, ZIndex=20,
+        ClipsDescendants=true,
+    }, outer)
+    Corner(5,body); Stroke(C.Flame,.55,1,body)
+    Pad(4,4,4,4,body)
+    List(Enum.FillDirection.Vertical,
+        Enum.VerticalAlignment.Top,
+        Enum.HorizontalAlignment.Left, 1, body)
+
+    local btns={}
+    for _,opt in ipairs(opts) do
+        local isSel = (opt.Text==sel)
+        local dotC  = opt.Color and Color3.fromHex(opt.Color:gsub("#","")) or nil
+
+        local itm = TBtn({
+            Name="DDI_"..opt.Text,
+            Size=UDim2.new(1,0,0,IH),
+            BackgroundColor3=isSel and Color3.fromHex("221810") or C.BgSurface2,
+            Text="", BorderSizePixel=0, ZIndex=21,
+        }, body)
+        Corner(4,itm); Pad(9,9,0,0,itm)
+
+        -- Color dot (optional)
+        if dotC then
+            New("Frame",{
+                Size=UDim2.new(0,5,0,5),
+                Position=UDim2.new(0,0,.5,-2.5),
+                BackgroundColor3=dotC,
+                BorderSizePixel=0, ZIndex=22,
+            }, itm)
+        end
+
+        local tl = Lbl({
+            Size=UDim2.new(1,0,1,0),
+            Position=UDim2.new(0,dotC and 10 or 0,0,0),
+            Text=opt.Text,
+            TextColor3=isSel and C.Flame or C.TextSecondary,
+            TextSize=12,
+            Font=isSel and Enum.Font.GothamMedium or Enum.Font.Gotham,
+            ZIndex=22,
+        }, itm)
+
+        -- Optional right-side tag
+        if opt.Tag then
+            local tf = New("Frame",{
+                Size=UDim2.new(0,0,0,15),
+                Position=UDim2.new(1,-4,.5,-7.5),
+                AnchorPoint=Vector2.new(1,0),
+                AutomaticSize=Enum.AutomaticSize.X,
+                BackgroundColor3=Color3.fromHex("221810"),
+                BorderSizePixel=0, ZIndex=22,
+            }, itm)
+            Corner(3,tf); Pad(5,5,0,0,tf)
+            Stroke(C.Flame,.78,1,tf)
+            Lbl({
+                Size=UDim2.new(0,0,1,0),
+                AutomaticSize=Enum.AutomaticSize.X,
+                Text=opt.Tag, TextColor3=C.Flame,
+                TextSize=9, Font=Enum.Font.Code, ZIndex=23,
+            }, tf)
+        end
+
+        itm.MouseEnter:Connect(function()
+            if opt.Text~=sel then
+                Tween(itm,{BackgroundColor3=C.BgHover},.1) end end)
+        itm.MouseLeave:Connect(function()
+            if opt.Text~=sel then
+                Tween(itm,{BackgroundColor3=C.BgSurface2},.1) end end)
+        itm.MouseButton1Click:Connect(function()
+            sel=opt.Text; selLbl.Text=opt.Text
+            for _,b2 in pairs(btns) do
+                local s2=(b2._ot==opt.Text)
+                Tween(b2,{BackgroundColor3=s2 and Color3.fromHex("221810") or C.BgSurface2},.1)
+                local l2=b2:FindFirstChildOfClass("TextLabel")
+                if l2 then
+                    l2.TextColor3=s2 and C.Flame or C.TextSecondary
+                    l2.Font=s2 and Enum.Font.GothamMedium or Enum.Font.Gotham
+                end
+            end
+            isOpen=false
+            Tween(body,{Size=UDim2.new(1,0,0,0)},.18)
+            Tween(hSk,{Color=C.Border,Transparency=.945},.15)
+            Tween(arrow,{Rotation=0},.18)
+            task.delay(.18, function() body.Visible=false end)
+            outer.Size=UDim2.new(1,0,0,yOff+30)
+            if cfg.Callback then cfg.Callback(opt.Text, opt.Value) end
+        end)
+        itm._ot=opt.Text
+        table.insert(btns,itm)
+    end
+
+    hdr.MouseEnter:Connect(function()
+        if not isOpen then Tween(hdr,{BackgroundColor3=C.BgSurface},.12) end end)
+    hdr.MouseLeave:Connect(function()
+        if not isOpen then Tween(hdr,{BackgroundColor3=C.BgDeep},.12) end end)
+    hdr.MouseButton1Click:Connect(function()
+        isOpen=not isOpen
+        if isOpen then
+            body.Visible=true; body.Size=UDim2.new(1,0,0,0)
+            Tween(body,{Size=UDim2.new(1,0,0,LH)},.2)
+            Tween(hSk,{Color=C.Flame,Transparency=.55},.15)
+            Tween(arrow,{Rotation=180},.2)
+            outer.Size=UDim2.new(1,0,0,yOff+30+LH+4)
+        else
+            Tween(body,{Size=UDim2.new(1,0,0,0)},.18)
+            Tween(hSk,{Color=C.Border,Transparency=.945},.15)
+            Tween(arrow,{Rotation=0},.18)
+            task.delay(.18, function() body.Visible=false end)
+            outer.Size=UDim2.new(1,0,0,yOff+30)
+        end
+    end)
+
+    local api={}
+    function api:Set(v) sel=v; selLbl.Text=v end
+    function api:Get()  return sel end
+    return api
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  SETTINGS ROW  — icon + title + sub + right widget
+--  cfg.RightType: "toggle" | "button" | "label" | "arrow"
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddSettingsRow(card, cfg)
+    cfg = cfg or {}
+    card._lo = card._lo+1
+
+    local row = New("Frame",{
+        Name="SR_"..(cfg.Title or "Row"),
+        Size=UDim2.new(1,0,0,48),
+        BackgroundColor3=C.BgDeep,
+        BorderSizePixel=0,
+        LayoutOrder=cfg.Order or card._lo,
+    }, card.List)
+    Corner(8,row)
+    local sk = Stroke(C.Border,.945,1,row)
+    Pad(11,11,0,0,row)
+
+    -- Icon chip
+    local chipBg = cfg.IconColor
+        and Color3.fromHex(cfg.IconColor:gsub("#","")) or C.BgActive
+    local chip = New("Frame",{
+        Size=UDim2.new(0,30,0,30),
+        Position=UDim2.new(0,0,.5,-15),
+        BackgroundColor3=chipBg,
+        BorderSizePixel=0,
+    }, row)
+    Corner(8,chip)
+
+    if cfg.Icon then
+        local ri  = RIcon(cfg.Icon)
+        local icC = cfg.IconAccent
+            and Color3.fromHex(cfg.IconAccent:gsub("#","")) or C.TextSecondary
+        PlaceIcon(ri,14,chip,{
+            Size    =UDim2.new(0,14,0,14),
+            Position=UDim2.new(.5,-7,.5,-7),
+            Color   =icC, ZIndex=2,
+        })
+    end
+
+    Lbl({
+        Size=UDim2.new(1,-130,0,16),
+        Position=UDim2.new(0,41,0,8),
+        Text=cfg.Title or "Setting",
+        TextColor3=C.TextPrimary,
+        TextSize=12, Font=Enum.Font.GothamMedium,
+    }, row)
+    Lbl({
+        Size=UDim2.new(1,-130,0,13),
+        Position=UDim2.new(0,41,0,27),
+        Text=cfg.Sub or "",
+        TextColor3=C.TextMuted,
+        TextSize=10, Font=Enum.Font.Gotham,
+    }, row)
+
+    local rt = cfg.RightType or "arrow"
+    if rt=="toggle" then
+        local state = cfg.Default==true
+        local trk = New("Frame",{
+            Size=UDim2.new(0,34,0,18),
+            Position=UDim2.new(1,-34,.5,-9),
+            BackgroundColor3=C.BgActive,
+            BorderSizePixel=0,
+        }, row)
+        Corner(999,trk); Stroke(C.Border,.92,1,trk)
+        local th = New("Frame",{
+            Size=UDim2.new(0,12,0,12),
+            Position=UDim2.new(0,2,.5,-6),
+            BackgroundColor3=C.TextMuted,
+            BorderSizePixel=0,
+        }, trk)
+        Corner(999,th)
+        local function Ref()
+            Tween(trk,{BackgroundColor3=state and C.Flame or C.BgActive},.18)
+            Tween(th,{
+                Position=state and UDim2.new(0,18,.5,-6) or UDim2.new(0,2,.5,-6),
+                BackgroundColor3=state and C.White or C.TextMuted,
+            },.2)
+        end; Ref()
+        local hit = TBtn({Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text=""},row)
+        hit.MouseButton1Click:Connect(function()
+            state=not state; Ref()
+            if cfg.Callback then cfg.Callback(state) end
+        end)
+        row.MouseEnter:Connect(function() Tween(sk,{Transparency=.88},.12) end)
+        row.MouseLeave:Connect(function() Tween(sk,{Transparency=.945},.12) end)
+
+    elseif rt=="button" then
+        local b = TBtn({
+            Size=UDim2.new(0,60,0,24),
+            Position=UDim2.new(1,-60,.5,-12),
+            BackgroundColor3=C.BgSurface2,
+            Text=cfg.BtnText or "Open",
+            TextColor3=C.TextSecondary,
+            TextSize=11, Font=Enum.Font.Gotham,
+            BorderSizePixel=0,
+        }, row)
+        Corner(5,b); Stroke(C.Border,.92,1,b)
+        b.MouseEnter:Connect(function()
+            Tween(b,{BackgroundColor3=C.BgHover,TextColor3=C.TextPrimary},.12) end)
+        b.MouseLeave:Connect(function()
+            Tween(b,{BackgroundColor3=C.BgSurface2,TextColor3=C.TextSecondary},.12) end)
+        b.MouseButton1Click:Connect(function()
+            if cfg.Callback then cfg.Callback() end end)
+
+    elseif rt=="label" then
+        Lbl({
+            Size=UDim2.new(0,0,1,0),
+            Position=UDim2.new(1,-4,0,0),
+            AnchorPoint=Vector2.new(1,0),
+            AutomaticSize=Enum.AutomaticSize.X,
+            Text=cfg.RightText or "",
+            TextColor3=C.TextSecondary,
+            TextSize=11, Font=Enum.Font.Code,
+            TextXAlignment=Enum.TextXAlignment.Right,
+        }, row)
+    else -- arrow
+        Lbl({
+            Size=UDim2.new(0,18,1,0),
+            Position=UDim2.new(1,-18,0,0),
+            Text="›",
+            TextColor3=C.TextDim,
+            TextSize=16, Font=Enum.Font.Code,
+            TextXAlignment=Enum.TextXAlignment.Right,
+        }, row)
+        local hit = TBtn({Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text=""},row)
+        hit.MouseEnter:Connect(function()
+            Tween(row,{BackgroundColor3=C.BgSurface},.12)
+            Tween(sk,{Transparency=.85},.12) end)
+        hit.MouseLeave:Connect(function()
+            Tween(row,{BackgroundColor3=C.BgDeep},.12)
+            Tween(sk,{Transparency=.945},.12) end)
+        hit.MouseButton1Click:Connect(function()
+            if cfg.Callback then cfg.Callback() end end)
+    end
+
+    return row
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  KEYBIND
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddKeybind(card, cfg)
+    cfg = cfg or {}
+    local cur     = cfg.Default or Enum.KeyCode.Unknown
+    local waiting = false
+
+    card._lo = card._lo+1
+    local H = cfg.Description and 48 or 36
+
+    local row = New("Frame",{
+        Name="KB_"..(cfg.Text or "KB"),
+        Size=UDim2.new(1,0,0,H),
+        BackgroundTransparency=1,
+        LayoutOrder=cfg.Order or card._lo,
+    }, card.List)
+
+    Lbl({
+        Size=UDim2.new(1,-105,1,0),
+        Text=cfg.Text or "Keybind",
+        TextColor3=C.TextPrimary,
+        TextSize=12, Font=Enum.Font.GothamMedium,
+    }, row)
+
+    if cfg.Description then
+        Lbl({
+            Size=UDim2.new(1,-105,0,13),
+            Position=UDim2.new(0,0,0,22),
+            Text=cfg.Description,
+            TextColor3=C.TextMuted,
+            TextSize=10, Font=Enum.Font.Gotham,
+        }, row)
+    end
+
+    local badge = TBtn({
+        Size=UDim2.new(0,96,0,24),
+        Position=UDim2.new(1,-96,.5,-12),
+        BackgroundColor3=C.BgSurface2,
+        Text=cur.Name,
+        TextColor3=C.Flame, TextSize=10, Font=Enum.Font.Code,
+        BorderSizePixel=0,
+    }, row)
+    Corner(5,badge); Stroke(C.Flame,.78,1,badge)
+
+    badge.MouseEnter:Connect(function()
+        if not waiting then Tween(badge,{BackgroundColor3=C.BgHover},.12) end end)
+    badge.MouseLeave:Connect(function()
+        if not waiting then Tween(badge,{BackgroundColor3=C.BgSurface2},.12) end end)
+    badge.MouseButton1Click:Connect(function()
+        if waiting then return end
+        waiting=true; badge.Text="Press key…"; badge.TextColor3=C.TextMuted
+        Tween(badge,{BackgroundColor3=C.BgHover},.1)
+        local conn
+        conn=UserInputService.InputBegan:Connect(function(i,gpe)
+            if gpe then return end
+            if i.UserInputType==Enum.UserInputType.Keyboard then
+                cur=i.KeyCode; badge.Text=cur.Name
+                badge.TextColor3=C.Flame
+                Tween(badge,{BackgroundColor3=C.BgSurface2},.12)
+                waiting=false; conn:Disconnect()
+                if cfg.Callback then cfg.Callback(cur) end
+            end
+        end)
+    end)
+
+    local api={}
+    function api:Get() return cur end
+    function api:Set(k) cur=k; badge.Text=k.Name end
+    return api
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  SEPARATOR
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddSeparator(card, cfg)
+    cfg = cfg or {}; card._lo = card._lo+1
+    if cfg.Text then
+        local w = New("Frame",{
+            Name="Sep",
+            Size=UDim2.new(1,0,0,18),
+            BackgroundTransparency=1,
+            LayoutOrder=card._lo,
+        }, card.List)
+        New("Frame",{
+            Size=UDim2.new(.5,-44,0,1),
+            Position=UDim2.new(0,0,.5,0),
+            BackgroundColor3=C.Border,BackgroundTransparency=.92,BorderSizePixel=0,
+        }, w)
+        Lbl({
+            Size=UDim2.new(0,0,1,0),
+            AutomaticSize=Enum.AutomaticSize.X,
+            AnchorPoint=Vector2.new(.5,0),
+            Position=UDim2.new(.5,0,0,0),
+            Text=cfg.Text:upper(),
+            TextColor3=C.TextDim, TextSize=8, Font=Enum.Font.Code,
+            TextXAlignment=Enum.TextXAlignment.Center,
+        }, w)
+        New("Frame",{
+            Size=UDim2.new(.5,-44,0,1),
+            Position=UDim2.new(.5,44,.5,0),
+            BackgroundColor3=C.Border,BackgroundTransparency=.92,BorderSizePixel=0,
+        }, w)
+        return w
+    end
+    return HBar(card.List, card._lo)
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  LABEL  (informational text inside a card)
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddLabel(card, cfg)
+    cfg = cfg or {}; card._lo = card._lo+1
+    return Lbl({
+        Size=UDim2.new(1,0,0,0),
+        AutomaticSize=Enum.AutomaticSize.Y,
+        Text=cfg.Text or "",
+        TextColor3=cfg.Color or C.TextSecondary,
+        TextSize=cfg.Size or 11,
+        Font=cfg.Bold and Enum.Font.GothamBold or Enum.Font.Gotham,
+        TextWrapped=true,
+        LayoutOrder=card._lo,
+    }, card.List)
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  ABOUT CARD  — decorative hero matching the original HTML
+--  cfg: Name, Version, Description, ActionText, ActionCallback
+--  Badges: { { Text, Type="flame"|"violet"|"green"|"blue" } }
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:AddAboutCard(tab, cfg)
+    cfg = cfg or {}
+
+    local frame = New("Frame",{
+        Name="About",
+        Size=UDim2.new(1,0,0,0),
+        BackgroundColor3=C.BgSurface,
+        BorderSizePixel=0,
+        AutomaticSize=Enum.AutomaticSize.Y,
+        LayoutOrder=0,
+    }, tab.Pane)
+    Corner(14,frame); Stroke(C.Border,.945,1,frame)
+    Pad(20,20,28,24,frame)
+
+    local inn = New("Frame",{
+        Size=UDim2.new(1,0,0,0),
+        BackgroundTransparency=1,
+        AutomaticSize=Enum.AutomaticSize.Y,
+    }, frame)
+    List(Enum.FillDirection.Vertical,
+        Enum.VerticalAlignment.Top,
+        Enum.HorizontalAlignment.Center, 12, inn)
+
+    -- Logo chip
+    local logoF = New("Frame",{
+        Size=UDim2.new(0,68,0,68),
+        BackgroundColor3=Color3.fromHex("1A1424"),
+        BorderSizePixel=0, LayoutOrder=0,
+    }, inn)
+    Corner(18,logoF); Stroke(C.Flame,.78,1,logoF)
+    Lbl({
+        Size=UDim2.new(1,0,1,0),
+        Text="✦", TextColor3=C.Flame,
+        TextSize=30, Font=Enum.Font.Code,
+        TextXAlignment=Enum.TextXAlignment.Center,
+    }, logoF)
+
+    -- App name
+    Lbl({
+        Size=UDim2.new(1,0,0,36),
+        Text=cfg.Name or self.Title,
+        TextColor3=C.TextBright,
+        TextSize=28, Font=Enum.Font.GothamBold,
+        TextXAlignment=Enum.TextXAlignment.Center,
+        LayoutOrder=1,
+    }, inn)
+
+    -- Badges row
+    local brow = New("Frame",{
+        Size=UDim2.new(1,0,0,22),
+        BackgroundTransparency=1, LayoutOrder=2,
+    }, inn)
+    List(Enum.FillDirection.Horizontal,
+        Enum.VerticalAlignment.Center,
+        Enum.HorizontalAlignment.Center, 6, brow)
+
+    local palettes = {
+        flame  = {Color3.fromHex("221810"), C.Flame,   Color3.fromHex("D4956A")},
+        violet = {Color3.fromHex("1A1430"), C.Violet,  Color3.fromHex("9B7FD4")},
+        green  = {Color3.fromHex("0E1E18"), C.Success, Color3.fromHex("5AB98B")},
+        blue   = {Color3.fromHex("0E1520"), C.Info,    Color3.fromHex("5B9BD5")},
+    }
+    local function MkBadge(text, btype, lo)
+        local p = palettes[btype] or palettes.flame
+        local bf = New("Frame",{
+            Size=UDim2.new(0,0,1,0),
+            AutomaticSize=Enum.AutomaticSize.X,
+            BackgroundColor3=p[1],
+            BorderSizePixel=0, LayoutOrder=lo or 0,
+        }, brow)
+        Corner(4,bf); Stroke(p[2],.75,1,bf); Pad(8,8,0,0,bf)
+        Lbl({
+            Size=UDim2.new(0,0,1,0),
+            AutomaticSize=Enum.AutomaticSize.X,
+            Text=text, TextColor3=p[3],
+            TextSize=9, Font=Enum.Font.Code,
+        }, bf)
+    end
+
+    MkBadge(cfg.Version or self.Version, "flame", 0)
+    for i, b in ipairs(cfg.Badges or {}) do
+        MkBadge(b.Text, b.Type or "violet", i)
+    end
+
+    -- Description
+    if cfg.Description then
+        Lbl({
+            Size=UDim2.new(1,-40,0,0),
+            AutomaticSize=Enum.AutomaticSize.Y,
+            Text=cfg.Description,
+            TextColor3=C.TextSecondary,
+            TextSize=12, Font=Enum.Font.Gotham,
+            TextXAlignment=Enum.TextXAlignment.Center,
+            TextWrapped=true, LayoutOrder=3,
+        }, inn)
+    end
+
+    -- Action button
+    if cfg.ActionText then
+        local ab = TBtn({
+            Size=UDim2.new(0,0,0,34),
+            AutomaticSize=Enum.AutomaticSize.X,
+            BackgroundColor3=C.Flame,
+            Text="", BorderSizePixel=0, LayoutOrder=4,
+        }, inn)
+        Corner(6,ab); Pad(22,22,0,0,ab)
+        Lbl({
+            Size=UDim2.new(1,0,1,0),
+            Text=cfg.ActionText,
+            TextColor3=Color3.fromHex("1A0E08"),
+            TextSize=12, Font=Enum.Font.GothamMedium,
+            TextXAlignment=Enum.TextXAlignment.Center,
+        }, ab)
+        ab.MouseEnter:Connect(function()
+            Tween(ab,{BackgroundColor3=C.FlameBright},.12) end)
+        ab.MouseLeave:Connect(function()
+            Tween(ab,{BackgroundColor3=C.Flame},.12) end)
+        ab.MouseButton1Click:Connect(function()
+            if cfg.ActionCallback then cfg.ActionCallback() end end)
+    end
+
+    return frame
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  TOAST  (success / warning / error / info)
+--  cfg: Type, Title, Message, Duration, Icon (optional override)
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:Toast(cfg)
+    cfg = cfg or {}
+    local kind = cfg.Type or "info"
+    local dur  = cfg.Duration or 4
+
+    local pal = {
+        success={C.Success,"✓"},
+        warning={C.Warning,"⚠"},
+        error  ={C.Error,  "✕"},
+        info   ={C.Info,   "ℹ"},
+    }
+    local col, glyph = table.unpack(pal[kind] or pal.info)
+
+    -- Lazy init toast container
+    if not self.ToastHolder or not self.ToastHolder.Parent then
+        self.ToastHolder = New("Frame",{
+            Name="Toasts",
+            Size=UDim2.new(0,295,1,-60),
+            Position=UDim2.new(1,-307,0,10),
+            BackgroundTransparency=1,
+            ZIndex=60,
+        }, self.Win)
+        local tl = List(Enum.FillDirection.Vertical,
+            Enum.VerticalAlignment.Bottom,
+            Enum.HorizontalAlignment.Left, 5, self.ToastHolder)
+        tl.SortOrder=Enum.SortOrder.LayoutOrder
+    end
+
+    self._tc = self._tc+1
+    local toast = New("Frame",{
+        Name="Toast_"..self._tc,
+        Size=UDim2.new(1,0,0,0),
+        BackgroundColor3=C.BgSurface2,
+        BorderSizePixel=0,
+        ClipsDescendants=true,
+        ZIndex=61,
+        LayoutOrder=self._tc,
+    }, self.ToastHolder)
+    Corner(10,toast); Stroke(C.Border,.935,1,toast)
+
+    -- Left color bar
+    New("Frame",{
+        Size=UDim2.new(0,3,1,0),
+        BackgroundColor3=col,
+        BorderSizePixel=0, ZIndex=62,
+    }, toast)
+
+    -- Icon chip
+    local chip = New("Frame",{
+        Size=UDim2.new(0,26,0,26),
+        Position=UDim2.new(0,14,.5,-13),
+        BackgroundColor3=col,
+        BackgroundTransparency=.86,
+        BorderSizePixel=0, ZIndex=62,
+    }, toast)
+    Corner(7,chip)
+
+    -- Icon inside chip
+    if cfg.Icon then
+        local ri = RIcon(cfg.Icon)
+        PlaceIcon(ri,14,chip,{
+            Size    =UDim2.new(0,14,0,14),
+            Position=UDim2.new(.5,-7,.5,-7),
+            Color   =col, ZIndex=63,
+        })
+    else
+        Lbl({
+            Size=UDim2.new(1,0,1,0),
+            Text=glyph, TextColor3=col,
+            TextSize=12, Font=Enum.Font.GothamBold,
+            TextXAlignment=Enum.TextXAlignment.Center,
+            ZIndex=63,
+        }, chip)
+    end
+
+    Lbl({
+        Size=UDim2.new(1,-86,0,16),
+        Position=UDim2.new(0,48,0,9),
+        Text=cfg.Title or "Notification",
+        TextColor3=C.TextBright,
+        TextSize=11, Font=Enum.Font.GothamBold, ZIndex=62,
+    }, toast)
+
+    Lbl({
+        Size=UDim2.new(1,-86,0,14),
+        Position=UDim2.new(0,48,0,27),
+        Text=cfg.Message or "",
+        TextColor3=C.TextSecondary,
+        TextSize=10, Font=Enum.Font.Gotham,
+        ZIndex=62, TextWrapped=true,
+    }, toast)
+
+    -- Close X
+    local cx = TBtn({
+        Size=UDim2.new(0,20,0,20),
+        Position=UDim2.new(1,-24,0,7),
+        BackgroundTransparency=1,
+        Text="✕", TextColor3=C.TextDim,
+        TextSize=10, Font=Enum.Font.Code, ZIndex=63,
+    }, toast)
+
+    -- Progress bar
+    local prog = New("Frame",{
+        Size=UDim2.new(1,-3,0,2),
+        Position=UDim2.new(0,3,1,-2),
+        BackgroundColor3=col,
+        BackgroundTransparency=.5,
+        BorderSizePixel=0, ZIndex=62,
+    }, toast)
+    Corner(999,prog)
+
+    local function Dismiss()
+        Tween(toast,{BackgroundTransparency=1},.2)
+        task.delay(.22, function() pcall(function() toast:Destroy() end) end)
+    end
+
+    -- Animate in
+    Tween(toast,{Size=UDim2.new(1,0,0,54)},.25,Enum.EasingStyle.Back)
+    -- Drain progress
+    Tween(prog,{Size=UDim2.new(0,0,0,2)},dur,Enum.EasingStyle.Linear)
+
+    cx.MouseEnter:Connect(function() cx.TextColor3=C.TextSecondary end)
+    cx.MouseLeave:Connect(function() cx.TextColor3=C.TextDim end)
+    cx.MouseButton1Click:Connect(Dismiss)
+    task.delay(dur+.1, Dismiss)
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--  DESTROY
+-- ═══════════════════════════════════════════════════════════════
+function ClaudeUI:Destroy()
+    self._dead = true
+    pcall(function() self.ScreenGui:Destroy() end)
+end
+
+-- ═══════════════════════════════════════════════════════════════
+return ClaudeUI
